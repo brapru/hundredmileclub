@@ -1,0 +1,29 @@
+{
+  "people": [
+    {
+      "name": "Beth",
+      "miles": 18.02,
+      "inspiredBy": ""
+    },
+    {
+      "name": "Brandon",
+      "miles": 11.9,
+      "inspiredBy": "https://banditrunning.com/products/bandit-cheque-ss-performance-tee-with-merrow-black?variant=45187437953174"
+    },
+    {
+      "name": "Claire",
+      "miles": 14,
+      "inspiredBy": ""
+    },
+    {
+      "name": "Ellen",
+      "miles": 20.39,
+      "inspiredBy": ""
+    },
+    {
+      "name": "Sarah",
+      "miles": 14,
+      "inspiredBy": ""
+    }
+  ]
+}

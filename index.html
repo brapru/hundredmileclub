@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>100 Mile April Challenge</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --track: #e5e7eb;
+      --accent: #2563eb;
+      --accent-2: #60a5fa;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 3vw, 3rem);
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .summary {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 28px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .summary strong {
+      font-size: 1.4rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      text-align: center;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.1);
+    }
+
+    .name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .progress-wrap {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      margin: 0 auto 16px;
+    }
+
+    .progress-ring {
+      width: 150px;
+      height: 150px;
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring circle {
+      fill: none;
+      stroke-width: 12;
+      stroke-linecap: round;
+    }
+
+    .progress-ring .bg {
+      stroke: var(--track);
+    }
+
+    .progress-ring .value {
+      stroke: url(#progressGradient);
+      transition: stroke-dashoffset 0.5s ease;
+    }
+
+    .progress-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-text .miles {
+      font-size: 1.8rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .progress-text .label {
+      margin-top: 6px;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .status {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .status strong {
+      color: var(--text);
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 30px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .inspired {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .inspired a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .inspired a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>100 Mile Club</h1>
+      <p>For the apparel</p>
+    </div>
+
+    <div id="errorBox"></div>
+
+    <div class="summary" id="summary">
+      <div>
+        <div>Family total</div>
+        <strong id="familyTotal">0 miles</strong>
+      </div>
+      <div>
+        <div>Participants</div>
+        <strong id="participantCount">0</strong>
+      </div>
+      <div>
+        <div>Challenge goal</div>
+        <strong>100 miles each</strong>
+      </div>
+    </div>
+
+    <div class="grid" id="trackerGrid"></div>
+  </div>
+
+  <script>
+    const GOAL = 100;
+    const RADIUS = 60;
+    const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function createCard(person) {
+      const miles = Number(person.miles) || 0;
+      const percent = clamp((miles / GOAL) * 100, 0, 100);
+      const dashOffset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
+      const remaining = Math.max(GOAL - miles, 0);
+      const complete = miles >= GOAL;
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="name">${person.name}</div>
+        <div class="progress-wrap">
+          <svg class="progress-ring" viewBox="0 0 150 150" aria-hidden="true">
+            <defs>
+              <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#2563eb"></stop>
+                <stop offset="100%" stop-color="#60a5fa"></stop>
+              </linearGradient>
+            </defs>
+            <circle class="bg" cx="75" cy="75" r="${RADIUS}"></circle>
+            <circle
+              class="value"
+              cx="75"
+              cy="75"
+              r="${RADIUS}"
+              stroke-dasharray="${CIRCUMFERENCE}"
+              stroke-dashoffset="${dashOffset}"
+            ></circle>
+          </svg>
+          <div class="progress-text">
+            <div class="miles">${miles}</div>
+            <div class="label">/ ${GOAL} miles</div>
+          </div>
+        </div>
+        <div class="status">
+          ${complete ? '<strong>Completed! 🏆</strong>' : `<strong>${remaining}</strong> miles to go`}
+        </div>
+        ${person.inspiredBy ? `
+            <div class="inspired">
+              <a href="${person.inspiredBy}" target="_blank" rel="noopener noreferrer">
+                Inspired By
+              </a>
+            </div>
+          ` : ''}
+        `;
+      return card;
+    }
+
+    async function loadTracker() {
+      const errorBox = document.getElementById('errorBox');
+      const grid = document.getElementById('trackerGrid');
+      const familyTotal = document.getElementById('familyTotal');
+      const participantCount = document.getElementById('participantCount');
+
+      try {
+        const response = await fetch('./data.json', { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`Could not load data.json (status ${response.status})`);
+        }
+
+        const data = await response.json();
+        const people = Array.isArray(data.people) ? data.people : [];
+
+        grid.innerHTML = '';
+
+        people.forEach(person => {
+          grid.appendChild(createCard(person));
+        });
+
+        const totalMiles = people.reduce((sum, person) => sum + (Number(person.miles) || 0), 0);
+        familyTotal.textContent = `${totalMiles} miles`;
+        participantCount.textContent = people.length;
+      } catch (error) {
+        errorBox.innerHTML = `<div class="error">${error.message}</div>`;
+      }
+    }
+
+    loadTracker();
+  </script>
+</body>
+
+</html>
