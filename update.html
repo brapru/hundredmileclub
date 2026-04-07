@@ -218,16 +218,11 @@
     <div class="container">
         <div class="hero">
             <h1>Update Your Miles</h1>
-            <p>Enter your new total and your password.</p>
         </div>
 
         <div class="notice">
             This page sets your total miles directly. If you ran, walked, or biked more, do the math on your side and
             enter your updated total here.
-            <br><br>
-            It will take a few minutes to update on the main page.
-            <br><br>
-            Please update responsibly because I'm using free versions of all of these services to make it work.
         </div>
 
         <div class="header-link">
@@ -242,8 +237,14 @@
         </div>
     </div>
 
-    <script>
-        const WORKER_URL = "https://hundredmileclub-updater.smith-pruitt.workers.dev";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+        import { firebaseConfig } from "./firebase-config.js";
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
         const peopleGrid = document.getElementById("peopleGrid");
         const pageError = document.getElementById("pageError");
 
@@ -257,40 +258,35 @@
             pageError.style.display = "block";
         }
 
-        function createPersonCard(person) {
+        function createPersonCard(personId, person) {
+            const miles = Number(person.miles) || 0;
+
             const card = document.createElement("div");
             card.className = "card";
-            card.dataset.personId = person.id;
+            card.dataset.personId = personId;
 
             card.innerHTML = `
         <h2>${person.name}</h2>
         <div class="current-total">
-          Current total: <strong>${formatMiles(person.miles || 0)}</strong> / 100 miles
+          Current total: <strong>${formatMiles(miles)}</strong> / 100 miles
         </div>
 
-        <label for="total-${person.id}">New total miles</label>
+        <label for="total-${personId}">New total miles</label>
         <input
-        id="total-${person.id}"
-        type="number"
-        step="0.01"
-        min="0"
-        inputmode="decimal"
-        value="${person.miles || 0}"
-        placeholder="${formatMiles(person.miles || 0)}"
+          id="total-${personId}"
+          type="number"
+          step="0.01"
+          min="0"
+          inputmode="decimal"
+          value="${miles}"
+          placeholder="${formatMiles(miles)}"
         />
 
-        <label for="passcode-${person.id}">Password</label>
-        <input
-          id="passcode-${person.id}"
-          type="password"
-          placeholder="Your password"
-        />
-
-        <button type="button" data-person-id="${person.id}">
+        <button type="button" data-person-id="${personId}">
           Update Miles
         </button>
 
-        <div id="message-${person.id}" class="message"></div>
+        <div id="message-${personId}" class="message"></div>
       `;
 
             return card;
@@ -308,71 +304,45 @@
             message.textContent = "";
         }
 
-        function updateDisplayedTotal(personId, newTotal) {
-            const card = document.querySelector(`[data-person-id="${personId}"]`);
-            if (!card) return;
-
-            const totalEl = card.querySelector(".current-total strong");
-            if (totalEl) {
-                totalEl.textContent = formatMiles(newTotal);
+        function renderPeople(peopleObj) {
+            peopleGrid.innerHTML = "";
+            for (const [personId, person] of Object.entries(peopleObj || {})) {
+                peopleGrid.appendChild(createPersonCard(personId, person));
             }
         }
 
-        async function loadPeople() {
-            try {
-                const response = await fetch("./data.json", { cache: "no-store" });
+        onValue(ref(db, "people"), (snapshot) => {
+            const peopleObj = snapshot.val() || {};
+            renderPeople(peopleObj);
+            pageError.style.display = "none";
+        }, (error) => {
+            showPageError(error.message);
+        });
 
-                if (!response.ok) {
-                    throw new Error(`Could not load data.json (status ${response.status})`);
-                }
+        document.addEventListener("click", async (event) => {
+            const button = event.target.closest("button[data-person-id]");
+            if (!button) return;
 
-                const data = await response.json();
-                const people = Array.isArray(data.people) ? data.people : [];
-
-                if (people.length === 0) {
-                    throw new Error("No participants were found in data.json.");
-                }
-
-                peopleGrid.innerHTML = "";
-                people.forEach((person) => {
-                    peopleGrid.appendChild(createPersonCard(person));
-                });
-            } catch (error) {
-                showPageError(error.message);
-            }
-        }
-
-        async function submitTotal(personId) {
+            const personId = button.dataset.personId;
             const totalInput = document.getElementById(`total-${personId}`);
-            const passcodeInput = document.getElementById(`passcode-${personId}`);
-            const button = document.querySelector(`button[data-person-id="${personId}"]`);
-
             const newTotal = Number(totalInput.value);
-            const passcode = passcodeInput.value.trim();
+
+            clearMessage(personId);
+
+            if (!Number.isFinite(newTotal) || newTotal < 0) {
+                setMessage(personId, "error", "Please enter a valid total of 0 or more.");
+                return;
+            }
 
             const currentTotalText = document.querySelector(
                 `[data-person-id="${personId}"] .current-total strong`
             )?.textContent;
 
-            const currentTotal = Number(currentTotalText);
-
-            clearMessage(personId);
-
-            if (!Number.isFinite(newTotal) || newTotal < 0) {
-                setMessage(personId, "error", "Please enter a valid total miles value of 0 or more.");
-                return;
-            }
-
-            if (!passcode) {
-                setMessage(personId, "error", "Please enter your password.");
-                return;
-            }
-
+            const currentTotal = Math.round(Number(currentTotalText) * 100) / 100;
             const roundedNewTotal = Math.round(newTotal * 100) / 100;
-            const roundedCurrentTotal = Math.round(currentTotal * 100) / 100;
 
-            if (Number.isFinite(roundedCurrentTotal) && roundedNewTotal === roundedCurrentTotal) {
-                setMessage(personId, "info", "No mileage change detected.");
+            if (Number.isFinite(currentTotal) && roundedNewTotal === currentTotal) {
+                setMessage(personId, "info", "No change detected.");
                 return;
             }
 
@@ -381,53 +351,19 @@
             setMessage(personId, "info", "Submitting update...");
 
             try {
-                const response = await fetch(WORKER_URL, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        personId,
-                        newTotal,
-                        passcode
-                    })
+                await update(ref(db, `people/${personId}`), {
+                    miles: roundedNewTotal
                 });
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    setMessage(
-                        personId,
-                        "error",
-                        data.details ? `${data.error}: ${data.details}` : (data.error || "Update failed.")
-                    ); return;
-                }
-
-                updateDisplayedTotal(personId, data.newTotal);
-                totalInput.value = data.newTotal;
-                passcodeInput.value = "";
-                setMessage(
-                    personId,
-                    "success",
-                    `Updated total to ${formatMiles(data.newTotal)} miles.`
-                );
+                totalInput.value = roundedNewTotal;
+                setMessage(personId, "success", `Updated total to ${formatMiles(roundedNewTotal)} miles.`);
             } catch (error) {
-                setMessage(personId, "error", "Network error. Please try again.");
+                setMessage(personId, "error", error.message || "Update failed.");
             } finally {
                 button.disabled = false;
                 button.textContent = "Update Miles";
             }
-        }
-
-        document.addEventListener("click", (event) => {
-            const button = event.target.closest("button[data-person-id]");
-            if (!button) return;
-
-            const personId = button.dataset.personId;
-            submitTotal(personId);
         });
-
-        loadPeople();
     </script>
 </body>
 

@@ -230,6 +230,7 @@
         <strong>100 miles each</strong>
       </div>
     </div>
+
     <div class="grid" id="trackerGrid"></div>
 
     <div class="footer-note">
@@ -238,10 +239,17 @@
 
   </div>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+    import { firebaseConfig } from "./firebase-config.js";
+
     const GOAL = 100;
     const RADIUS = 60;
     const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
     function clamp(value, min, max) {
       return Math.min(Math.max(value, min), max);
@@ -304,36 +312,30 @@
       return card;
     }
 
-    async function loadTracker() {
-      const errorBox = document.getElementById('errorBox');
-      const grid = document.getElementById('trackerGrid');
-      const familyTotal = document.getElementById('familyTotal');
-      const participantCount = document.getElementById('participantCount');
+    const grid = document.getElementById("trackerGrid");
+    const familyTotal = document.getElementById("familyTotal");
+    const participantCount = document.getElementById("participantCount");
+    const errorBox = document.getElementById("errorBox");
 
-      try {
-        const response = await fetch('./data.json', { cache: 'no-store' });
-        if (!response.ok) {
-          throw new Error(`Could not load data.json (status ${response.status})`);
-        }
+    onValue(ref(db, "people"), (snapshot) => {
+      const peopleObj = snapshot.val() || {};
+      const people = Object.entries(peopleObj).map(([id, person]) => ({
+        id,
+        ...person
+      }));
 
-        const data = await response.json();
-        const people = Array.isArray(data.people) ? data.people : [];
+      grid.innerHTML = "";
+      people.forEach((person) => {
+        grid.appendChild(createCard(person));
+      });
 
-        grid.innerHTML = '';
-
-        people.forEach(person => {
-          grid.appendChild(createCard(person));
-        });
-
-        const totalMiles = people.reduce((sum, person) => sum + (Number(person.miles) || 0), 0);
-        familyTotal.textContent = `${formatMiles(totalMiles)} miles`;
-        participantCount.textContent = people.length;
-      } catch (error) {
-        errorBox.innerHTML = `<div class="error">${error.message}</div>`;
-      }
-    }
-
-    loadTracker();
+      const totalMiles = people.reduce((sum, person) => sum + (Number(person.miles) || 0), 0);
+      familyTotal.textContent = `${formatMiles(totalMiles)} miles`;
+      participantCount.textContent = people.length;
+      errorBox.innerHTML = "";
+    }, (error) => {
+      errorBox.innerHTML = `<div class="error">${error.message}</div>`;
+    });
   </script>
 </body>
 
