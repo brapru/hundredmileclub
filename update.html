@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Your Miles</title>
+    <style>
+        :root {
+            --bg: #f6f7fb;
+            --card: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --error-bg: #fee2e2;
+            --error-text: #991b1b;
+            --info-bg: #eff6ff;
+            --info-text: #1d4ed8;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --radius: 18px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px 48px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .hero h1 {
+            margin: 0 0 8px;
+            font-size: clamp(2rem, 3vw, 3rem);
+        }
+
+        .hero p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 1.05rem;
+        }
+
+        .notice {
+            max-width: 760px;
+            margin: 0 auto 28px;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 16px 18px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 22px;
+        }
+
+        .card h2 {
+            margin: 0 0 8px;
+            font-size: 1.25rem;
+        }
+
+        .current-total {
+            margin-bottom: 16px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .current-total strong {
+            color: var(--text);
+        }
+
+        label {
+            display: block;
+            margin: 12px 0 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            background: #fff;
+        }
+
+        input:focus {
+            outline: 2px solid rgba(37, 99, 235, 0.18);
+            border-color: var(--accent);
+        }
+
+        button {
+            width: 100%;
+            margin-top: 16px;
+            border: 0;
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 16px;
+            font-weight: 700;
+            background: var(--accent);
+            color: white;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.05s ease;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: wait;
+        }
+
+        .message {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .message.success {
+            display: block;
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+
+        .message.error {
+            display: block;
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+
+        .message.info {
+            display: block;
+            background: var(--info-bg);
+            color: var(--info-text);
+        }
+
+        .page-error {
+            max-width: 760px;
+            margin: 0 auto 24px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: var(--error-bg);
+            color: var(--error-text);
+            display: none;
+        }
+
+        .footer-link {
+            text-align: center;
+            margin-top: 30px;
+            color: var(--muted);
+        }
+
+        .footer-link a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>Update Your Miles</h1>
+            <p>Enter your new total and your password.</p>
+        </div>
+
+        <div class="notice">
+            This page sets your total miles directly. If you ran, walked, or biked more, do the math on your side and
+            enter your updated total here. It will take a few minutes to update on the main page.
+        </div>
+
+        <div id="pageError" class="page-error"></div>
+        <div id="peopleGrid" class="grid"></div>
+
+        <div class="footer-link">
+            <a href="./index.html">Back to tracker</a>
+        </div>
+    </div>
+
+    <script>
+        const WORKER_URL = "https://hundredmileclub-updater.smith-pruitt.workers.dev";
+        const peopleGrid = document.getElementById("peopleGrid");
+        const pageError = document.getElementById("pageError");
+
+        function formatMiles(value) {
+            const rounded = Number(value).toFixed(2);
+            return Number(rounded).toString();
+        }
+
+        function showPageError(message) {
+            pageError.textContent = message;
+            pageError.style.display = "block";
+        }
+
+        function createPersonCard(person) {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.dataset.personId = person.id;
+
+            card.innerHTML = `
+        <h2>${person.name}</h2>
+        <div class="current-total">
+          Current total: <strong>${formatMiles(person.miles || 0)}</strong> / 100 miles
+        </div>
+
+        <label for="total-${person.id}">New total miles</label>
+        <input
+        id="total-${person.id}"
+        type="number"
+        step="0.01"
+        min="0"
+        inputmode="decimal"
+        value="${person.miles || 0}"
+        placeholder="${formatMiles(person.miles || 0)}"
+        />
+
+        <label for="passcode-${person.id}">Password</label>
+        <input
+          id="passcode-${person.id}"
+          type="password"
+          placeholder="Your password"
+        />
+
+        <button type="button" data-person-id="${person.id}">
+          Update Miles
+        </button>
+
+        <div id="message-${person.id}" class="message"></div>
+      `;
+
+            return card;
+        }
+
+        function setMessage(personId, type, text) {
+            const message = document.getElementById(`message-${personId}`);
+            message.className = `message ${type}`;
+            message.textContent = text;
+        }
+
+        function clearMessage(personId) {
+            const message = document.getElementById(`message-${personId}`);
+            message.className = "message";
+            message.textContent = "";
+        }
+
+        function updateDisplayedTotal(personId, newTotal) {
+            const card = document.querySelector(`[data-person-id="${personId}"]`);
+            if (!card) return;
+
+            const totalEl = card.querySelector(".current-total strong");
+            if (totalEl) {
+                totalEl.textContent = formatMiles(newTotal);
+            }
+        }
+
+        async function loadPeople() {
+            try {
+                const response = await fetch("./data.json", { cache: "no-store" });
+
+                if (!response.ok) {
+                    throw new Error(`Could not load data.json (status ${response.status})`);
+                }
+
+                const data = await response.json();
+                const people = Array.isArray(data.people) ? data.people : [];
+
+                if (people.length === 0) {
+                    throw new Error("No participants were found in data.json.");
+                }
+
+                peopleGrid.innerHTML = "";
+                people.forEach((person) => {
+                    peopleGrid.appendChild(createPersonCard(person));
+                });
+            } catch (error) {
+                showPageError(error.message);
+            }
+        }
+
+        async function submitTotal(personId) {
+            const totalInput = document.getElementById(`total-${personId}`);
+            const passcodeInput = document.getElementById(`passcode-${personId}`);
+            const button = document.querySelector(`button[data-person-id="${personId}"]`);
+
+            const newTotal = Number(totalInput.value);
+            const passcode = passcodeInput.value.trim();
+
+            const currentTotalText = document.querySelector(
+                `[data-person-id="${personId}"] .current-total strong`
+            )?.textContent;
+
+            const currentTotal = Number(currentTotalText);
+
+            clearMessage(personId);
+
+            if (!Number.isFinite(newTotal) || newTotal < 0) {
+                setMessage(personId, "error", "Please enter a valid total miles value of 0 or more.");
+                return;
+            }
+
+            if (!passcode) {
+                setMessage(personId, "error", "Please enter your password.");
+                return;
+            }
+
+            const roundedNewTotal = Math.round(newTotal * 100) / 100;
+            const roundedCurrentTotal = Math.round(currentTotal * 100) / 100;
+
+            if (Number.isFinite(roundedCurrentTotal) && roundedNewTotal === roundedCurrentTotal) {
+                setMessage(personId, "info", "No mileage change detected.");
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = "Submitting...";
+            setMessage(personId, "info", "Submitting update...");
+
+            try {
+                const response = await fetch(WORKER_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        personId,
+                        newTotal,
+                        passcode
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    setMessage(
+                        personId,
+                        "error",
+                        data.details ? `${data.error}: ${data.details}` : (data.error || "Update failed.")
+                    ); return;
+                }
+
+                updateDisplayedTotal(personId, data.newTotal);
+                totalInput.value = data.newTotal;
+                passcodeInput.value = "";
+                setMessage(
+                    personId,
+                    "success",
+                    `Updated total to ${formatMiles(data.newTotal)} miles.`
+                );
+            } catch (error) {
+                setMessage(personId, "error", "Network error. Please try again.");
+            } finally {
+                button.disabled = false;
+                button.textContent = "Update Miles";
+            }
+        }
+
+        document.addEventListener("click", (event) => {
+            const button = event.target.closest("button[data-person-id]");
+            if (!button) return;
+
+            const personId = button.dataset.personId;
+            submitTotal(personId);
+        });
+
+        loadPeople();
+    </script>
+</body>
+
+</html>
