@@ -1,0 +1,34 @@
+{
+  "people": [
+    {
+      "name": "Beth",
+      "miles": 0,
+      "inspiredBy": ""
+    },
+    {
+      "name": "Brandon",
+      "miles": 0,
+      "inspiredBy": ""
+    },
+    {
+      "name": "Claire",
+      "miles": 0,
+      "inspiredBy": ""
+    },
+    {
+      "name": "Ellen",
+      "miles": 0,
+      "inspiredBy": ""
+    },
+    {
+      "name": "Mark",
+      "miles": 0,
+      "inspiredBy": ""
+    },
+    {
+      "name": "Sarah",
+      "miles": 0,
+      "inspiredBy": ""
+    }
+  ]
+}
