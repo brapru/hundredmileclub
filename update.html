@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Update Your Miles</title>
+    <link rel="icon" type="image/png" href="./assets/favicon.png">
     <style>
         :root {
             --bg: #f6f7fb;
@@ -12,7 +13,7 @@
             --text: #1f2937;
             --muted: #6b7280;
             --border: #e5e7eb;
-            --accent: #2563eb;
+            --accent: #1D53CC;
             --accent-hover: #1d4ed8;
             --success-bg: #dcfce7;
             --success-text: #166534;
@@ -43,16 +44,26 @@
 
         .hero {
             text-align: center;
-            margin-bottom: 28px;
+            margin-bottom: 24px;
+        }
+
+        .hero-sign {
+            display: block;
+            width: min(100%, 820px);
+            height: auto;
+            margin: 0 auto 10px;
+            border: 0;
+            box-shadow: none;
+            filter: none;
         }
 
         .hero h1 {
-            margin: 0 0 8px;
-            font-size: clamp(2rem, 3vw, 3rem);
+            margin: 4px 0 0;
+            font-size: clamp(1.5rem, 2.5vw, 2.25rem);
         }
 
         .hero p {
-            margin: 0;
+            margin: 6px 0 0;
             color: var(--muted);
             font-size: 1.05rem;
         }
@@ -217,11 +228,12 @@
 <body>
     <div class="container">
         <div class="hero">
+            <img class="hero-sign" src="./assets/giddy-up-header.png" alt="Giddy Up 100 Mile Club" />
             <h1>Update Your Miles</h1>
         </div>
 
         <div class="notice">
-            This page sets your total miles directly. If you ran, walked, or biked more, do the math on your side and
+            This page sets your total miles directly. If you ran or walked, do the math on your side and
             enter your updated total here.
         </div>
 
@@ -268,7 +280,7 @@
             card.innerHTML = `
         <h2>${person.name}</h2>
         <div class="current-total">
-          Current total: <strong>${formatMiles(miles)}</strong> / 100 miles
+          Current total: <strong>${formatMiles(miles)}</strong> / 50 miles
         </div>
 
         <label for="total-${personId}">New total miles</label>

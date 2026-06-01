@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Giddy Up 100 Mile Club</title>
+  <link rel="icon" type="image/png" href="./assets/favicon.png">
   <style>
     :root {
       --bg: #f6f7fb;
@@ -12,7 +13,7 @@
       --text: #1f2937;
       --muted: #6b7280;
       --track: #e5e7eb;
-      --accent: #2563eb;
+      --accent: #1D53CC;
       --accent-2: #60a5fa;
       --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       --radius: 18px;
@@ -37,18 +38,18 @@
 
     .hero {
       text-align: center;
-      margin-bottom: 32px;
+      margin-bottom: 24px;
+      overflow: visible;
     }
 
-    .hero h1 {
-      margin: 0 0 8px;
-      font-size: clamp(2rem, 3vw, 3rem);
-    }
-
-    .hero p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 1.05rem;
+    .hero-sign {
+      display: block;
+      width: min(100%, 820px);
+      height: auto;
+      margin: 0 auto 10px;
+      border: 0;
+      box-shadow: none;
+      filter: none;
     }
 
     .summary {
@@ -57,15 +58,36 @@
       box-shadow: var(--shadow);
       padding: 20px;
       margin-bottom: 28px;
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 16px;
-      justify-content: space-between;
+      align-items: stretch;
+    }
+
+    .stat {
+      display: flex;
       align-items: center;
+      gap: 14px;
+      min-width: 0;
     }
 
     .summary strong {
+      display: block;
       font-size: 1.4rem;
+      line-height: 1.1;
+    }
+
+    .summary-icon {
+      width: 48px;
+      height: 48px;
+      display: block;
+      margin: 0 auto 8px;
+    }
+
+    @media (max-width: 760px) {
+      .summary {
+        grid-template-columns: 1fr;
+      }
     }
 
     .grid {
@@ -205,10 +227,8 @@
 <body>
   <div class="container">
     <div class="hero">
-      <h1>100 Mile Club</h1>
-      <p>But this time only 50. By foot. </p>
-      <br>
-      <p>June 2026</p>
+      <img class="hero-sign" src="./assets/giddy-up-header.png" alt="Giddy Up 100 Mile Club" />
+      <p class="date">June 2026</p>
     </div>
 
     <div class="header-note">
