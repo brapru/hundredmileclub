@@ -228,7 +228,7 @@
   <div class="container">
     <div class="hero">
       <img class="hero-sign" src="./assets/giddy-up-header.png" alt="Giddy Up 100 Mile Club" />
-      <p class="date">June 2026</p>
+      <p class="date" id="currentMonth"></p>
     </div>
 
     <div class="header-note">
@@ -272,6 +272,9 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+
+    document.getElementById("currentMonth").textContent =
+      new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
     function clamp(value, min, max) {
       return Math.min(Math.max(value, min), max);
